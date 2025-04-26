@@ -16,16 +16,26 @@ services:
       - app-network
     restart: unless-stopped
 
-  django:
-    build: .
-    container_name: django
-    command: python manage.py runserver 0.0.0.0:8000
+  flask:
+    build: ./flask
+    container_name: flask
     volumes:
-      - .:/app
+      - .:/flask
+      - ./shared-data:/shared-data
     ports:
-      - 8000:8000
+      - "8000:8000"
     env_file:
       - .env
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  webscraping:
+    build: ./webscraping
+    container_name: webscraping
+    volumes:
+      - .:/webscraping
+      - ./shared-data:/shared-data
     networks:
       - app-network
     depends_on:
@@ -40,12 +50,12 @@ services:
       - "443:443"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./app:/var/www/html
+      - .:/var/www/html
       - ./nginx/ssl:/etc/ssl/certs:ro
     networks:
       - app-network
     depends_on:
-      - django
+      - flask
     restart: unless-stopped
 
 networks:
@@ -54,3 +64,4 @@ networks:
 
 volumes:
   postgresql-data:
+  shared-data:
