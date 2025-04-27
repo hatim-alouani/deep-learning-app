@@ -7,8 +7,17 @@ WORKDIR /flask
 
 COPY requirements.txt /flask/
 
+RUN apt-get update && apt-get install -y libpq-dev gcc 
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /flask/
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+CMD ["python", "/flask/flask/app.py", "--bind", "0.0.0.0:8000"]
+
+CMD ["python", "/flask/flask/app.py", "--bind", "0.0.0.0:8000"]
+
+CMD ["python", "/flask/flask/app.py", "--bind", "0.0.0.0:8000"]
+
+
+# CMD ["tail", "-f", "/dev/null"]

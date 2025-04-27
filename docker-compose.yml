@@ -28,16 +28,6 @@ services:
       - .env
     networks:
       - app-network
-    restart: unless-stopped
-
-  webscraping:
-    build: ./webscraping
-    container_name: webscraping
-    volumes:
-      - .:/webscraping
-      - ./shared-data:/shared-data
-    networks:
-      - app-network
     depends_on:
       - postgresql
     restart: unless-stopped
@@ -49,9 +39,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - .:/var/www/html
-      - ./nginx/ssl:/etc/ssl/certs:ro
     networks:
       - app-network
     depends_on:
