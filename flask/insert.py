@@ -42,6 +42,22 @@ CATEGORY_MAPPING = {
     'automotive': 10
 }
 
+# Ensure the `product_link` column exists
+def add_product_link_column():
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        alter_query = """
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS product_link TEXT;
+        """
+        cursor.execute(alter_query)
+        conn.commit()
+    except Exception as e:
+        print(f"Error adding column: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
 def insert_csv(filepath):
     category_name = os.path.splitext(os.path.basename(filepath))[0]
     category_id = CATEGORY_MAPPING.get(category_name)
@@ -82,6 +98,9 @@ def insert_csv(filepath):
         conn.close()
 
 def main():
+    # Add the product_link column if it doesn't exist
+    add_product_link_column()
+
     filepaths = [os.path.join(CSV_DIR, filename) for filename in CSV_FILES]
     with ThreadPoolExecutor(max_workers=5) as executor:
         executor.map(insert_csv, filepaths)

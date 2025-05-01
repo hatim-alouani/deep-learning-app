@@ -228,7 +228,11 @@
                         <span class="rating-count">(${ratingCount} reviews)</span>
                     </div>
                     <div class="product-about">${product.about_product || 'No description available.'}</div>
+                    <div class="product-link">
+                        <button class="btn" onclick="window.open('${product.product_link}', '_blank')">View Product</button>
+                    </div>
                 `;
+
                 
                 recommendationsDiv.appendChild(productCard);
             });

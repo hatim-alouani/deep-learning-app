@@ -151,7 +151,8 @@ def api_recommendations():
                 'rating': product.rating,
                 'rating_count': product.rating_count,
                 'about_product': product.about_product,
-                'category_name': category_name
+                'category_name': category_name,
+                'product_link': product.product_link  # Add the product link
             }
 
         return jsonify({'recommendations': [product_to_dict(p) for p in top_products]})
