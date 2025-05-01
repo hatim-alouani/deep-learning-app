@@ -22,9 +22,6 @@ clean:
 	@docker system prune -af --volumes
 	@echo -e "$(GREEN)[✔] Cleanup complete!$(NC)"
 
-GREEN=\033[0;32m
-NC=\033[0m
-
 scrap:
 	@if [ ! -d "myenv" ]; then \
 		python3 -m venv myenv && \
@@ -34,12 +31,12 @@ scrap:
 		pip install -r webscraping/requirements.txt && \
 		echo -e "$(GREEN)[✔] Dependencies installed!$(NC)" && \
 		echo -e "$(BLUE)[+] Running web scraping script...$(NC)" && \
-		python3 webscraping/scraper.py ; \
+		python3 webscraping/scrape.py ; \
 	else \
 		echo -e "$(GREEN)[✔] Virtual environment exists!$(NC)"; \
 		source myenv/bin/activate && \
-		python3 webscraping/scraper.py ; \
+		python3 webscraping/scrape.py ; \
 	fi
-
+	@echo -e "$(GREEN)[✔] Web scraping script completed!$(NC)"
 
 restart: down all

@@ -1,5 +1,11 @@
-Flask>=3.0.2
+flask==2.0.1
+flask-sqlalchemy==2.5.1
+SQLAlchemy==1.4.49
 python-dotenv>=1.0.1
-gunicorn>=21.2.0
-psycopg2-binary==2.9.3
+psycopg2-binary==2.9.1
 psycopg2
+werkzeug==2.0.1
+tensorflow==2.15.0
+numpy
+pandas
+scikit-learn

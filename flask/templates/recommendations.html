@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Recommendations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .recommendations {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: 300px;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .product-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            height: 40px;
+            overflow: hidden;
+        }
+        .product-category {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .product-price {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .discount-price {
+            font-weight: bold;
+            color: #e63946;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+        .actual-price {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .discount-percent {
+            background-color: #e63946;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .product-rating {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .rating-stars {
+            color: #ffd700;
+            margin-right: 5px;
+        }
+        .rating-count {
+            color: #666;
+            font-size: 12px;
+        }
+        .product-about {
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 15px;
+            height: 80px;
+            overflow: hidden;
+        }
+        .loading {
+            text-align: center;
+            margin: 50px auto;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Your Personalized Recommendations</h1>
+    
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <p>Finding the best products for you...</p>
+    </div>
+    
+    <div id="recommendations" class="recommendations" style="display: none;"></div>
+    
+    <div class="buttons">
+        <a href="/welcome" class="btn">Back to Welcome Page</a>
+        <a href="/get_recommendations" class="btn">Refresh Recommendations</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchRecommendations();
+        });
+
+        function fetchRecommendations() {
+            // Add debug logging
+            console.log('Fetching recommendations...');
+            
+            fetch('/api/recommendations')
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Server responded with ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    if (data && data.recommendations) {
+                        displayRecommendations(data.recommendations);
+                    } else {
+                        throw new Error('Invalid response format');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching recommendations:', error);
+                    document.getElementById('loading').innerHTML = `
+                        <p>Error loading recommendations: ${error.message}</p>
+                        <button onclick="fetchRecommendations()" class="btn">Try Again</button>
+                    `;
+                });
+        }
+
+
+        function displayRecommendations(products) {
+            const recommendationsDiv = document.getElementById('recommendations');
+            document.getElementById('loading').style.display = 'none';
+            recommendationsDiv.style.display = 'flex';
+            recommendationsDiv.innerHTML = ''; // Clear previous recommendations
+            
+            if (!products || products.length === 0) {
+                recommendationsDiv.innerHTML = '<p>No recommendations found based on your preferences.</p>';
+                return;
+            }
+            
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                
+                // Generate stars based on rating
+                const rating = product.rating || 0;
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= Math.floor(rating)) {
+                        stars += '★';
+                    } else if (i - 0.5 <= rating) {
+                        stars += '★';
+                    } else {
+                        stars += '☆';
+                    }
+                }
+                
+                // Handle null values safely
+                const discountedPrice = product.discounted_price !== null ? product.discounted_price : 0;
+                const actualPrice = product.actual_price !== null ? product.actual_price : 0;
+                const discountPercentage = product.discount_percentage !== null ? product.discount_percentage : 0;
+                const ratingCount = product.rating_count !== null ? product.rating_count : 0;
+                const categoryName = product.category_name ? product.category_name.replace(/_/g, ' ') : '';
+                
+                productCard.innerHTML = `
+                    <div class="product-name">${product.product_name || 'Unnamed Product'}</div>
+                    <div class="product-category">Category: ${categoryName}</div>
+                    <div class="product-price">
+                        <span class="discount-price">$${discountedPrice.toFixed(2)}</span>
+                        <span class="actual-price">$${actualPrice.toFixed(2)}</span>
+                        <span class="discount-percent">${discountPercentage.toFixed(0)}% OFF</span>
+                    </div>
+                    <div class="product-rating">
+                        <span class="rating-stars">${stars}</span>
+                        <span>${rating.toFixed(1)}</span>
+                        <span class="rating-count">(${ratingCount} reviews)</span>
+                    </div>
+                    <div class="product-about">${product.about_product || 'No description available.'}</div>
+                `;
+                
+                recommendationsDiv.appendChild(productCard);
+            });
+        }
+
+    </script>
+</body>
+</html>

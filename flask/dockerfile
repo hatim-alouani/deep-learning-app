@@ -2,6 +2,7 @@ FROM python:3.11.4-slim-buster
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV CUDA_VISIBLE_DEVICES=""
 
 WORKDIR /flask
 
@@ -13,11 +14,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /flask/
 
+CMD ["python", "/flask/flask/insert.py", "--bind", "0.0.0.0:8000"]
 CMD ["python", "/flask/flask/app.py", "--bind", "0.0.0.0:8000"]
-
-CMD ["python", "/flask/flask/app.py", "--bind", "0.0.0.0:8000"]
-
-CMD ["python", "/flask/flask/app.py", "--bind", "0.0.0.0:8000"]
-
-
-# CMD ["tail", "-f", "/dev/null"]

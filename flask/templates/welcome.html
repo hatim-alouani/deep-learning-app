@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Shopping Recommendations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .btn-primary {
+            background-color: #007bff;
+        }
+        .badge {
+            margin-right: 5px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .user-avatar {
+            background-color: #007bff;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+        .alert {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-success">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h3>Welcome, {{ user.name }}!</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <h4>{{ user.name }}</h4>
+                                <p>{{ user.email }}</p>
+                            </div>
+                        </div>
+                        
+                        <h5>Your Preferred Categories:</h5>
+                        <div class="mb-4">
+                            {% for preference in preferences %}
+                                <span class="badge bg-primary">{{ preference|replace('_', ' ') }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('get_recommendations_page') }}" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart me-2"></i> Get Product Recommendations
+                            </a>
+                            <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-user-edit me-2"></i> Edit Profile
+                            </a>
+                            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

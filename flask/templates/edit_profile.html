@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .categories-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .category-item {
+            margin-bottom: 8px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .btn-save {
+            background-color: #2ecc71;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .flash-message {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Edit Profile</h1>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="form-container">
+        <form action="/update_profile" method="post">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" value="{{ user.name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Select Categories:</label>
+                <div class="categories-container">
+                    {% for category in categories %}
+                    <div class="category-item">
+                        <input type="checkbox" id="category-{{ category.id }}" name="categories" value="{{ category.name }}"
+                            {% if category.id in selected_categories %}checked{% endif %}>
+                        <label for="category-{{ category.id }}">{{ category.name|replace('_', ' ') }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <a href="/welcome" class="btn">Cancel</a>
+                <button type="submit" class="btn btn-save">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
