@@ -137,7 +137,6 @@ def get_product_details(driver, url, category_name):
         
         product_data["discounted_price"] = extract_price_value(price_text)
         
-        # Skip products with missing price
         if product_data["discounted_price"] is None:
             return None
         
@@ -209,7 +208,7 @@ def get_products_from_category(driver, category):
     all_product_urls = []
     current_page = 1
     current_url = category['url']
-    max_pages = 5
+    max_pages = 10 
     
     while current_url and current_page <= max_pages:
         try:
@@ -292,8 +291,6 @@ def process_category(category):
     try:
         product_urls = get_products_from_category(driver, category)
         
-        product_urls = product_urls[:100]
-        
         logger.info(f"{thread_name} - Will scrape {len(product_urls)} products for {category['name']}")
         
         for idx, url in enumerate(product_urls):
@@ -329,6 +326,7 @@ def category_thread_worker(category_queue):
             category_queue.task_done()
         except Exception as e:
             logger.error(f"Thread error: {str(e)}")
+            category_queue.task_done()
 
 def main():
     os.makedirs("amazon_data", exist_ok=True)
@@ -347,8 +345,11 @@ def main():
     for category in categories:
         category_queue.put(category)
     
+    num_threads = min(5, len(categories)) 
+    logger.info(f"Starting {num_threads} worker threads to process {len(categories)} categories")
+    
     threads = []
-    for i in range(min(10, len(categories))):
+    for i in range(num_threads):
         thread = threading.Thread(
             target=category_thread_worker, 
             args=(category_queue,),
@@ -358,10 +359,9 @@ def main():
         threads.append(thread)
         thread.start()
     
-    for thread in threads:
-        thread.join()
+    category_queue.join()
     
-    logger.info("All threads completed. Scraping finished.")
+    logger.info("All categories have been processed. Scraping finished.")
 
 if __name__ == "__main__":
     main()

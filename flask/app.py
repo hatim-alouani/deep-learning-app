@@ -10,7 +10,6 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import StandardScaler
 
-# Wait for PostgreSQL to be ready
 while True:
     try:
         conn = psycopg2.connect(
@@ -27,7 +26,6 @@ while True:
         print("Waiting for PostgreSQL...")
         time.sleep(2)
 
-# Flask setup
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '2908')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@postgresql/postgres'
@@ -35,7 +33,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# DB Models
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -82,7 +79,6 @@ def create_tables():
             db.session.add(Category(name=category_name))
     db.session.commit()
 
-# Recommendation Routes
 @app.route('/get_recommendations')
 def get_recommendations_page():
     if 'user_id' not in session:
@@ -99,33 +95,28 @@ def api_recommendations():
         return jsonify({'error': 'Unauthorized'}), 401
     user_id = session['user_id']
     
-    # Get the user's preferred categories
     preferred_categories = db.session.query(UserPreference.category_id).filter_by(user_id=user_id).all()
     preferred_categories = [cat_id for (cat_id,) in preferred_categories]
     
     if not preferred_categories:
         return jsonify({'error': 'No preferred categories selected.'}), 404
     
-    # Get all products in the preferred categories
     products = Product.query.filter(
         Product.category_id.in_(preferred_categories),
-        Product.discount_percentage > 0  # Only include products with discounts
+        Product.discount_percentage > 0  
     ).all()
     
     if not products:
         return jsonify({'error': 'No discounted products found in your preferred categories.'}), 404
 
-    # Collect product features for the model
     features = []
     product_map = []
     
     for product in products:
-        # Skip products with missing data
         if None in (product.discounted_price, product.actual_price, 
                     product.discount_percentage, product.rating, product.rating_count):
             continue
             
-        # Create feature vector
         feature_vector = [
             float(product.discounted_price),
             float(product.actual_price),
@@ -137,37 +128,29 @@ def api_recommendations():
         features.append(feature_vector)
         product_map.append(product)
     
-    # If no valid products after filtering
     if not features:
         return jsonify({'recommendations': []})
     
-    # Prepare data for training
     X = np.array(features)
     
-    # Feature scaling for better model performance
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     
-    # Create recommendation score based on a weighted combination of features
-    # Higher weights for discount, rating, and rating count
     discount_weight = 0.35
     rating_weight = 0.35
     price_weight = 0.15
     rating_count_weight = 0.15
-    
-    # Normalized prices (lower is better)
+
     max_price = np.max(X[:, 0]) if len(X) > 0 else 1
     normalized_prices = 1 - (X[:, 0] / max_price)
     
-    # Calculate recommendation scores
     weighted_scores = (
         price_weight * normalized_prices +
-        discount_weight * (X[:, 2] / 100) +  # Convert percentage to decimal
-        rating_weight * (X[:, 3] / 5) +      # Normalize ratings to [0-1]
-        rating_count_weight * (np.log1p(X[:, 4]) / np.max(np.log1p(X[:, 4])))  # Log-normalized count
+        discount_weight * (X[:, 2] / 100) +  
+        rating_weight * (X[:, 3] / 5) +    
+        rating_count_weight * (np.log1p(X[:, 4]) / np.max(np.log1p(X[:, 4]))) 
     )
     
-    # Define and compile the neural network model
     model = Sequential([
         Dense(128, input_dim=X_scaled.shape[1], activation='relu'),
         BatchNormalization(),
@@ -184,7 +167,7 @@ def api_recommendations():
         loss='mean_squared_error'
     )
     
-    # Train the model with early stopping
+
     early_stopping = EarlyStopping(monitor='loss', patience=20, restore_best_weights=True)
     model.fit(
         X_scaled, 
@@ -195,21 +178,18 @@ def api_recommendations():
         verbose=0
     )
     
-    # Generate predictions and get top recommendations
+
     predictions = model.predict(X_scaled).flatten()
     
-    # Get top products (more than requested to ensure diversity)
     top_indices = np.argsort(predictions)[-20:][::-1]
     
-    # Apply diversity filter - ensure we have products from different price ranges
     selected_indices = []
     price_buckets = {}
-    max_per_bucket = 2  # Maximum products per price bucket
-    
-    # Define price buckets and populate them
+    max_per_bucket = 2 
+
     for idx in top_indices:
         price = product_map[idx].discounted_price
-        bucket = int(price / 500)  # Group by price bands of $500
+        bucket = int(price / 500) 
         
         if bucket not in price_buckets:
             price_buckets[bucket] = []
@@ -220,13 +200,12 @@ def api_recommendations():
             
             if len(selected_indices) >= 5:
                 break
-    
-    # If we need more products, take from top predictions without bucketing
+
     if len(selected_indices) < 5:
         remaining = [idx for idx in top_indices if idx not in selected_indices]
         selected_indices.extend(remaining[:5-len(selected_indices)])
     
-    # Get the final list of recommended products
+
     recommended_products = [product_map[i] for i in selected_indices[:5]]
     
     def product_to_dict(product):
@@ -245,7 +224,6 @@ def api_recommendations():
 
     return jsonify({'recommendations': [product_to_dict(p) for p in recommended_products]})
 
-# Additional routes and login flow (sign-up, login, profile, etc.)
 @app.route('/')
 def index():
     return render_template('home.html')
