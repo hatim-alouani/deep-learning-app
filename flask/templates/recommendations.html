@@ -123,6 +123,12 @@
         .btn:hover {
             background-color: #2980b9;
         }
+        .refresh-timer {
+            text-align: center;
+            color: #666;
+            margin-top: 15px;
+            font-size: 14px;
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -139,30 +145,65 @@
     
     <div id="recommendations" class="recommendations" style="display: none;"></div>
     
+    <div class="refresh-timer" id="refresh-timer"></div>
+    
     <div class="buttons">
         <a href="/welcome" class="btn">Back to Welcome Page</a>
-        <a href="/get_recommendations" class="btn">Refresh Recommendations</a>
+        <a href="#" class="btn" id="refresh-btn">Refresh Now</a>
     </div>
 
     <script>
+        let refreshInterval;
+        let countdown = 30;
+        
         document.addEventListener('DOMContentLoaded', function() {
             fetchRecommendations();
+            startRefreshTimer();
+            
+            document.getElementById('refresh-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                resetRefreshTimer();
+                fetchRecommendations();
+            });
         });
+        
+        function startRefreshTimer() {
+            countdown = 30;
+            updateTimerDisplay();
+            
+            clearInterval(refreshInterval);
+            refreshInterval = setInterval(function() {
+                countdown--;
+                updateTimerDisplay();
+                
+                if (countdown <= 0) {
+                    fetchRecommendations();
+                    countdown = 30;
+                }
+            }, 1000);
+        }
+        
+        function resetRefreshTimer() {
+            clearInterval(refreshInterval);
+            startRefreshTimer();
+        }
+        
+        function updateTimerDisplay() {
+            document.getElementById('refresh-timer').textContent = `Refreshing in ${countdown} seconds`;
+        }
 
         function fetchRecommendations() {
-            // Add debug logging
-            console.log('Fetching recommendations...');
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('recommendations').style.display = 'none';
             
             fetch('/api/recommendations')
                 .then(response => {
-                    console.log('Response status:', response.status);
                     if (!response.ok) {
                         throw new Error('Server responded with ' + response.status);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Received data:', data);
                     if (data && data.recommendations) {
                         displayRecommendations(data.recommendations);
                     } else {
@@ -170,7 +211,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error fetching recommendations:', error);
                     document.getElementById('loading').innerHTML = `
                         <p>Error loading recommendations: ${error.message}</p>
                         <button onclick="fetchRecommendations()" class="btn">Try Again</button>
@@ -178,12 +218,11 @@
                 });
         }
 
-
         function displayRecommendations(products) {
             const recommendationsDiv = document.getElementById('recommendations');
             document.getElementById('loading').style.display = 'none';
             recommendationsDiv.style.display = 'flex';
-            recommendationsDiv.innerHTML = ''; // Clear previous recommendations
+            recommendationsDiv.innerHTML = '';
             
             if (!products || products.length === 0) {
                 recommendationsDiv.innerHTML = '<p>No recommendations found based on your preferences.</p>';
@@ -194,20 +233,12 @@
                 const productCard = document.createElement('div');
                 productCard.className = 'product-card';
                 
-                // Generate stars based on rating
                 const rating = product.rating || 0;
                 let stars = '';
                 for (let i = 1; i <= 5; i++) {
-                    if (i <= Math.floor(rating)) {
-                        stars += '★';
-                    } else if (i - 0.5 <= rating) {
-                        stars += '★';
-                    } else {
-                        stars += '☆';
-                    }
+                    stars += i <= Math.floor(rating) || i - 0.5 <= rating ? '★' : '☆';
                 }
                 
-                // Handle null values safely
                 const discountedPrice = product.discounted_price !== null ? product.discounted_price : 0;
                 const actualPrice = product.actual_price !== null ? product.actual_price : 0;
                 const discountPercentage = product.discount_percentage !== null ? product.discount_percentage : 0;
@@ -232,12 +263,10 @@
                         <button class="btn" onclick="window.open('${product.product_link}', '_blank')">View Product</button>
                     </div>
                 `;
-
                 
                 recommendationsDiv.appendChild(productCard);
             });
         }
-
     </script>
 </body>
 </html>

@@ -8,6 +8,13 @@ all:
 	@echo -e "$(BLUE)[+] Starting Docker containers...$(NC)"
 	@docker compose -f docker-compose.yml up --build -d
 	@echo -e "$(GREEN)[✔] Containers are running!$(NC)"
+	@echo -e "$(BLUE)[+] Waiting for the database to be ready...$(NC)"
+	@sleep 2
+	@echo -e "$(GREEN)[✔] Database is ready!$(NC)"
+
+start: all 
+	@echo -e "$(BLUE)[+] Running database migrations...$(NC)"
+	@docker exec -it flask /bin/bash /flask/insertData/insert.sh
 
 down:
 	@echo -e "$(YELLOW)[-] Stopping and removing containers without deleting volumes...$(NC)"
@@ -22,21 +29,26 @@ clean:
 	@docker system prune -af --volumes
 	@echo -e "$(GREEN)[✔] Cleanup complete!$(NC)"
 
-scrap:
+YELLOW=\033[1;33m
+GREEN=\033[0;32m
+RED=\033[0;31m
+NC=\033[0m
+
+scrap: all
 	@if [ ! -d "myenv" ]; then \
+		echo -e "$(YELLOW)[+] Creating virtual environment...$(NC)"; \
 		python3 -m venv myenv && \
-		echo -e "$(GREEN)[✔] Virtual environment created!$(NC)" && \
-		source myenv/bin/activate && \
-		echo -e "$(BLUE)[+] Installing dependencies...$(NC)" && \
-		pip install -r webscraping/requirements.txt && \
-		echo -e "$(GREEN)[✔] Dependencies installed!$(NC)" && \
-		echo -e "$(BLUE)[+] Running web scraping script...$(NC)" && \
-		python3 webscraping/scrape.py ; \
-	else \
-		echo -e "$(GREEN)[✔] Virtual environment exists!$(NC)"; \
-		source myenv/bin/activate && \
-		python3 webscraping/scrape.py ; \
+		echo -e "$(GREEN)[✔] Virtual environment created!$(NC)"; \
+		echo -e "$(YELLOW)[+] Installing dependencies...$(NC)"; \
+		myenv/bin/pip install -r webscraping/requirements.txt && \
+		echo -e "$(GREEN)[✔] Dependencies installed!$(NC)"; \
 	fi
+	@echo -e "$(YELLOW)[+] Starting web scraping...$(NC)"
+	@myenv/bin/python webscraping/scraper.py
 	@echo -e "$(GREEN)[✔] Web scraping script completed!$(NC)"
+
+rmscrap:
+	@echo -e "$(YELLOW)[-] Removing scraping data...$(NC)"
+	@rm -rf amazon_data
 
 restart: down all
