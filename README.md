@@ -50,15 +50,18 @@ git clone https://github.com/hatim-alouani/deep-learning-app
 ```
 
 ```bash
-cd pdeep-learning-app
+cd deep-learning-app
 ```
 
-# 🔧 **Build and Start the Application**
+# 🔧 **Scrap data**
 
 ```bash
 make scrap
 ```
 Run a real-time Amazon data scraper
+
+
+# 🔧 **Build and Start the Application**
 
 ```bash
 make start
